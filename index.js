@@ -10,18 +10,18 @@ const userInfoContainer = document.querySelector(".user-info-container");
 
 //initially vairables need????
 
-let currentTab = userTab;
+let oldTab = userTab;
 const API_KEY = "d1845658f92b31c64bd94f06f7188c9c";
-currentTab.classList.add("current-tab");
+oldTab.classList.add("current-tab");
 getfromSessionStorage();
 
 
 
-function switchTab(clickedTab) {
-    if(clickedTab != currentTab) {
-        currentTab.classList.remove("current-tab");
-        currentTab = clickedTab;
-        currentTab.classList.add("current-tab");
+function switchTab(newTab) {
+    if(newTab != oldTab) {
+        oldTab.classList.remove("current-tab");
+        oldTab = newTab;
+        oldTab.classList.add("current-tab");
 
         if(!searchForm.classList.contains("active")) {
             userInfoContainer.classList.remove("active");
@@ -30,7 +30,7 @@ function switchTab(clickedTab) {
         }
         else {
             // main phlensearch waletab pe tha , ab your weather wale tab pe aa gya hoon
-            searchForm.classList.remove("actice");
+            searchForm.classList.remove("active");
             userInfoContainer.classList.remove("active");
             // ab mein your weather pe aa gya hoon toh weather bhi check krna padega so lets check local storage frst
             getfromSessionStorage();
@@ -115,7 +115,61 @@ function renderWeatherInfo(weatherInfo) {
     
 }
 
+ function getLocation() {
+    if(navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(showPositon);
+    }
+    else {
+        //HW - show an alert for no gelolocation support available
+    }
+ }
 
+ function showPositon(position) {
+
+    const userCoordinates = {
+        lat : position.coords.latitude,
+        lon : position.coords.longitude,
+    }
+
+    sessionStorage.setItem("user-coordinates", JSON.stringify(userCoordinates));
+    fetchUserWeatherInfo(userCoordinates);
+
+ }
+
+const grantAccessButton = document.querySelector("[data-grantAccess]");
+grantAccessButton.addEventListener("click", getLocation);
+
+let searchInput = document.querySelector("[data-searchInput]");
+
+searchForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    let cityName = searchInput.value;
+
+    if(cityName === "")
+        return;
+    else
+        fetchSearchWeatherInfo(cityName);
+})
+
+async function fetchSearchWeatherInfo(city) {
+    
+    loadingScreen.classList.add("active");
+    userInfoContainer.classList.remove("active");
+    grantAccessContainer.classList.remove("active");
+
+    try {
+        const response = await fetch(
+            `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric`
+          );
+        const data = await response.json();
+        loadingScreen.classList.remove("active");
+        userInfoContainer.classList.add("active");
+        renderWeatherInfo(data);
+    }
+    catch(err) {
+        //hW
+    }
+}
 
 
 
